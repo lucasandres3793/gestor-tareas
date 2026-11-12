@@ -5,6 +5,7 @@ import { cerrarSesion } from "../services/auth";
 import { crearTarea, editarTarea, alternarCompletada, borrarTarea } from "../services/tasks";
 import { TodoForm } from "../components/TodoForm";
 import { TodoList } from "../components/TodoList";
+import { BotonResumen } from "../components/BotonResumen";
 import type { Task, TaskInput, FiltroTareas } from "../types/task";
 
 export function Tareas() {
@@ -76,6 +77,8 @@ export function Tareas() {
         <button type="button" onClick={() => cerrarSesion()}>
           Cerrar sesión
         </button>
+
+        {user !== null && <BotonResumen tareas={tareas} email={user.email ?? ""} />}
       </header>
 
       <section>
