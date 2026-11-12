@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import type { TaskInput, Prioridad } from "../types/task";
+import type { TaskInput } from "../types/task";
 
 interface Props {
   valorInicial?: TaskInput;

@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 
 // Codigo de servidor: nunca llega al navegador.
@@ -19,25 +20,19 @@ function esPedidoValido(body: unknown): body is Pedido {
   );
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1. Solo POST.
-  if (request.method !== "POST") {
-    return Response.json({ error: "Método no permitido." }, { status: 405 });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Método no permitido." });
   }
 
   // 2. Validar lo que manda el cliente.
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "El cuerpo no es JSON válido." }, { status: 400 });
-  }
+  const body: unknown = req.body;
 
   if (!esPedidoValido(body)) {
-    return Response.json(
-      { error: "Faltan datos: se requieren 'to' (email) y 'summary' (texto)." },
-      { status: 400 }
-    );
+    return res.status(400).json({
+      error: "Faltan datos: se requieren 'to' (email) y 'summary' (texto).",
+    });
   }
 
   // 3. Leer la configuracion del entorno del servidor.
@@ -48,7 +43,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   if (!region || !from || !accessKeyId || !secretAccessKey) {
     console.error("Faltan variables de entorno de SES.");
-    return Response.json({ error: "El servidor no está configurado." }, { status: 500 });
+    return res.status(500).json({ error: "El servidor no está configurado." });
   }
 
   // 4. Armar el comando. El remitente lo fija el servidor, no el cliente.
@@ -71,9 +66,9 @@ export default async function handler(request: Request): Promise<Response> {
   // 5. Enviar y responder.
   try {
     const resultado = await ses.send(comando);
-    return Response.json({ ok: true, messageId: resultado.MessageId });
+    return res.status(200).json({ ok: true, messageId: resultado.MessageId });
   } catch (e: unknown) {
     console.error("Error al enviar con SES:", e);
-    return Response.json({ error: "No pudimos enviar el email." }, { status: 502 });
+    return res.status(502).json({ error: "No pudimos enviar el email." });
   }
 }
